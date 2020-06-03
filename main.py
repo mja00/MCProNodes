@@ -26,7 +26,7 @@ bot = commands.Bot(command_prefix="`", status=discord.Status.do_not_disturb, act
 bot.remove_command("help")
 
 # Handlers
-initHandlers = []
+initHandlers = ['statusHandler']
 
 #Create a logs dir
 print(f"{Fore.YELLOW}Checking for logs directory")
