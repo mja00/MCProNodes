@@ -5,16 +5,44 @@ import re
 
 class Location(object):
     def __init__(self, location: str):
+        self.statusjson = session.get("https://panel.mcprohosting.com/api/v1/public/nodes/statuses").json()
         self.location = location
         self.nodes = self.get_all_nodes()
+        self.total_nodes = len(self.get_all_nodes())
+        self.percentage_online = int((self.num_online() / self.total_nodes)*100)
+        self.percentage_offline = int(100 - self.percentage_online)
+        self.offline_nodes = self.get_all_offline_nodes()
+
 
     def get_all_nodes(self):
         nodes = []
-        path = "https://panel.mcprohosting.com/api/v1/public/nodes/statuses"
-        statusJson = session.get(path).json()
-        for node in statusJson[self.location]:
+        for node in self.statusjson[self.location]:
             nodes.append(node)
         return nodes
+
+    def num_offline(self):
+        offlineNodes = 0
+        for node in self.statusjson[self.location]:
+            status = self.statusjson[self.location][node]["online"]
+            if not status:
+                offlineNodes = offlineNodes + 1
+        return offlineNodes
+
+    def num_online(self):
+        onlineNodes = 0
+        for node in self.statusjson[self.location]:
+            status = self.statusjson[self.location][node]["online"]
+            if status:
+                onlineNodes = onlineNodes + 1
+        return onlineNodes
+
+    def get_all_offline_nodes(self):
+        offlineNodes = []
+        for node in self.statusjson[self.location]:
+            if not self.statusjson[self.location][node]["online"]:
+                offlineNodes.append(node)
+        return offlineNodes
+
 
 class Node(object):
     def __init__(self, node: str):
@@ -33,14 +61,10 @@ class Node(object):
                 return location
 
     def get_online(self):
-        path = "https://panel.mcprohosting.com/api/v1/public/nodes/statuses"
-        statusJson = session.get(path).json()
-        return statusJson[self.location][self.node]["online"]
+        return self.statusjson[self.location][self.node]["online"]
 
     def get_network_issue(self):
-        path = "https://panel.mcprohosting.com/api/v1/public/nodes/statuses"
-        statusJson = session.get(path).json()
-        network_issue = statusJson[self.location][self.node]["network_issue"]
+        network_issue = self.statusjson[self.location][self.node]["network_issue"]
         if not network_issue:
             return network_issue
         else:
@@ -49,12 +73,8 @@ class Node(object):
             return network_issue
 
     def get_message(self):
-        path = "https://panel.mcprohosting.com/api/v1/public/nodes/statuses"
-        statusJson = session.get(path).json()
-        return statusJson[self.location][self.node]["message"]
+        return self.statusjson[self.location][self.node]["message"]
 
     def get_last_heartbeat(self):
-        path = "https://panel.mcprohosting.com/api/v1/public/nodes/statuses"
-        statusJson = session.get(path).json()
-        heartbeat = dt.strptime(statusJson[self.location][self.node]["last_heartbeat"], '%Y-%m-%dT%H:%M:%S.%fZ')
+        heartbeat = dt.strptime(self.statusjson[self.location][self.node]["last_heartbeat"], '%Y-%m-%dT%H:%M:%S.%fZ')
         return heartbeat

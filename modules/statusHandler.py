@@ -32,13 +32,18 @@ class statusHandler(commands.Cog):
             color=discord.Color.green() if node.online else discord.Color.red()
         )
 
-        embed.timestamp = dt.utcnow()
+        embed.timestamp = node.last_heartbeat
+        embed.set_footer(text="Last Heartbeat")
 
         embed.add_field(name="Location", value=node.location, inline=True)
-        embed.add_field(name="Online", value=node.online, inline=True)
-        embed.add_field(name="Network Issue", value=node.network_issue, inline=True)
-        embed.add_field(name="Message", value=node.message, inline=True)
-        embed.add_field(name="Last Hearbeat", value=node.last_heartbeat, inline=True)
+        embed.add_field(name="Status", value="Online" if node.online else "Offline", inline=True)
+        try:
+            if node.network_issue:
+                embed.add_field(name="Node Message", value=node.network_issue, inline=False)
+        except Exception:
+            pass
+        if not node.online:
+            embed.add_field(name="Message", value=node.message, inline=False)
         return embed
 
 
